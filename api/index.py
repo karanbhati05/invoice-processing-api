@@ -112,8 +112,8 @@ def process_invoice():
             temp_path = temp_file.name
             file.save(temp_path)
         
-        # Extract invoice data with OCR API key
-        result = extract_invoice_data(temp_path, KNOWN_VENDORS, OCR_API_KEY)
+        # Extract invoice data with OCR API key (no vendor list needed)
+        result = extract_invoice_data(temp_path, None, OCR_API_KEY)
         
         # Clean up temporary file
         try:
@@ -160,33 +160,6 @@ def health_check():
         'status': 'healthy',
         'service': 'Invoice Processing API',
         'version': '1.0.0'
-    }), 200
-
-
-@app.route('/', methods=['GET'])
-def index():
-    """
-    Root endpoint with API information.
-    
-    Returns:
-        JSON response with API usage instructions
-    """
-    return jsonify({
-        'name': 'Intelligent Invoice Processing API',
-        'version': '1.0.0',
-        'endpoints': {
-            '/api/process': {
-                'method': 'POST',
-                'description': 'Upload invoice image for processing',
-                'parameters': {
-                    'file': 'Invoice image file (PNG, JPG, PDF, etc.)'
-                }
-            },
-            '/api/health': {
-                'method': 'GET',
-                'description': 'Health check endpoint'
-            }
-        }
     }), 200
 
 

@@ -9,13 +9,13 @@ import requests
 from fuzzywuzzy import process
 
 
-def extract_invoice_data(image_path, known_vendors, ocr_api_key=None):
+def extract_invoice_data(image_path, known_vendors=None, ocr_api_key=None):
     """
     Extract key invoice information from an image using OCR and pattern matching.
     
     Args:
         image_path (str): Path to the invoice image file
-        known_vendors (list): List of known vendor names for fuzzy matching
+        known_vendors (list, optional): Legacy parameter, not used with NLP extraction
         ocr_api_key (str, optional): OCR.space API key. If not provided, uses env variable.
     
     Returns:
@@ -42,8 +42,8 @@ def extract_invoice_data(image_path, known_vendors, ocr_api_key=None):
             'error': f'OCR failed: {str(e)}'
         }
     
-    # Extract vendor name using fuzzy matching
-    vendor = extract_vendor(raw_text, known_vendors)
+    # Extract vendor name using NLP
+    vendor = extract_vendor_nlp(raw_text)
     
     # Extract invoice date using regex
     date = extract_date(raw_text)
@@ -105,6 +105,7 @@ def perform_ocr(image_path, api_key):
 def extract_vendor(text, known_vendors):
     """
     Find the best matching vendor name from the text using fuzzy matching.
+    DEPRECATED: Use extract_vendor_nlp() instead for intelligent extraction.
     
     Args:
         text (str): Raw OCR text
@@ -122,6 +123,70 @@ def extract_vendor(text, known_vendors):
     
     if result and result[1] >= 60:  # 60% confidence threshold
         return result[0]
+    
+    return None
+
+
+def extract_vendor_nlp(text):
+    """
+    Extract vendor/company name from invoice text using NLP patterns.
+    Looks for common invoice patterns like company headers, "Bill To", "From", etc.
+    
+    Args:
+        text (str): Raw OCR text from invoice
+    
+    Returns:
+        str: Extracted vendor name or None
+    """
+    if not text:
+        return None
+    
+    lines = text.strip().split('\n')
+    
+    # Strategy 1: Look for "Bill From", "From:", "Vendor:", "Sold by:" etc.
+    vendor_patterns = [
+        r"(?:Bill\s+From|From|Vendor|Sold\s+by|Invoice\s+from)[\s:]+(.+)",
+        r"(?:Billed\s+by|Supplier|Company)[\s:]+(.+)",
+    ]
+    
+    for pattern in vendor_patterns:
+        for line in lines:
+            match = re.search(pattern, line, re.IGNORECASE)
+            if match:
+                vendor = match.group(1).strip()
+                # Clean up the vendor name
+                vendor = re.sub(r'[^\w\s&.-]', '', vendor)
+                if vendor and len(vendor) > 2:
+                    return vendor
+    
+    # Strategy 2: Look at the first few lines (company name is usually at the top)
+    # Skip very short lines and lines with only numbers
+    for line in lines[:5]:
+        line = line.strip()
+        # Skip empty lines, very short lines, or lines that are mostly numbers
+        if not line or len(line) < 3:
+            continue
+        if re.match(r'^\d+$', line):  # Skip lines with only numbers
+            continue
+        if re.match(r'^[\d\s\-/()]+$', line):  # Skip lines with only numbers and separators
+            continue
+        
+        # Look for lines that seem like company names (usually capitalized, contains letters)
+        if re.search(r'[A-Z][a-z]+', line):
+            # Clean up the name
+            cleaned = re.sub(r'[^\w\s&.-]', '', line).strip()
+            if cleaned and len(cleaned) > 2 and len(cleaned) < 100:
+                return cleaned
+    
+    # Strategy 3: Look for patterns like "Company Name Inc." or "Company LLC"
+    company_suffix_pattern = r"([A-Z][A-Za-z\s&.-]+(?:Inc|LLC|Ltd|Corp|Corporation|Co|Company|Group|Enterprises|Solutions)\.?)"
+    
+    for line in lines[:10]:
+        match = re.search(company_suffix_pattern, line)
+        if match:
+            vendor = match.group(1).strip()
+            if len(vendor) > 3:
+                return vendor
     
     return None
 
