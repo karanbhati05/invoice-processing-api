@@ -694,26 +694,46 @@
             if (!extractedData) return;
             
             const d = extractedData.data;
-            let table = 'INVOICE DATA\n';
-            table += '━'.repeat(50) + '\n\n';
-            table += `Vendor:         ${d.vendor || 'N/A'}\n`;
-            table += `Invoice #:      ${d.invoice_number || 'N/A'}\n`;
-            table += `Date:           ${d.date || 'N/A'}\n`;
-            table += `Subtotal:       ${d.subtotal || 'N/A'}\n`;
-            table += `Tax:            ${d.tax || 'N/A'}\n`;
-            table += `Total:          ${d.total || 'N/A'}\n\n`;
+            
+            // Create nicely formatted table
+            let table = '╔════════════════════════════════════════════════════════════════════════╗\n';
+            table += '║                          INVOICE DETAILS                               ║\n';
+            table += '╠════════════════════════════════════════════════════════════════════════╣\n';
+            table += `║ Vendor Name      │ ${padRight(d.vendor || 'Not Available', 53)} ║\n`;
+            table += '╟──────────────────┼────────────────────────────────────────────────────╢\n';
+            table += `║ Invoice Number   │ ${padRight(d.invoice_number || 'Not Available', 53)} ║\n`;
+            table += '╟──────────────────┼────────────────────────────────────────────────────╢\n';
+            table += `║ Invoice Date     │ ${padRight(d.date || 'Not Available', 53)} ║\n`;
+            table += '╟──────────────────┼────────────────────────────────────────────────────╢\n';
+            table += `║ Subtotal         │ ${padRight(d.subtotal || 'Not Available', 53)} ║\n`;
+            table += '╟──────────────────┼────────────────────────────────────────────────────╢\n';
+            table += `║ Tax Amount       │ ${padRight(d.tax || 'Not Available', 53)} ║\n`;
+            table += '╟──────────────────┼────────────────────────────────────────────────────╢\n';
+            table += `║ TOTAL AMOUNT     │ ${padRight(d.total || 'Not Available', 53)} ║\n`;
+            table += '╚══════════════════╧════════════════════════════════════════════════════╝\n';
             
             if (d.summary) {
-                table += `Summary:        ${d.summary}\n\n`;
+                table += '\n╔════════════════════════════════════════════════════════════════════════╗\n';
+                table += '║                            SUMMARY                                     ║\n';
+                table += '╠════════════════════════════════════════════════════════════════════════╣\n';
+                const summaryLines = wrapText(d.summary, 70);
+                summaryLines.forEach(line => {
+                    table += `║ ${padRight(line, 70)} ║\n`;
+                });
+                table += '╚════════════════════════════════════════════════════════════════════════╝\n';
             }
             
             if (d.line_items && d.line_items.length > 0) {
-                table += 'LINE ITEMS\n';
-                table += '─'.repeat(50) + '\n';
+                table += '\n╔══════╦═══════════════════════════════════════════╦══════════╦═══════════╗\n';
+                table += '║  #   ║ Description                               ║ Quantity ║ Price     ║\n';
+                table += '╠══════╬═══════════════════════════════════════════╬══════════╬═══════════╣\n';
                 d.line_items.forEach((item, i) => {
-                    table += `${i + 1}. ${item.description || 'Item'}\n`;
-                    table += `   Quantity: ${item.quantity || 'N/A'}  |  Price: ${item.price || 'N/A'}\n`;
+                    const desc = truncate(item.description || 'Item', 43);
+                    const qty = truncate(item.quantity || '-', 8);
+                    const price = truncate(item.price || '-', 9);
+                    table += `║ ${padRight((i + 1).toString(), 4)} ║ ${padRight(desc, 45)} ║ ${padRight(qty, 8)} ║ ${padRight(price, 9)} ║\n`;
                 });
+                table += '╚══════╩═══════════════════════════════════════════╩══════════╩═══════════╝\n';
             }
             
             copyToClipboard(table);
@@ -746,29 +766,104 @@
             downloadFile(csv, 'invoice_data.csv', 'text/csv');
         });
         
-        // 3. Export as Excel (TSV format for Excel compatibility)
+        // 3. Export as Excel (Proper HTML table format for better Excel compatibility)
         document.getElementById('exportExcelBtn').addEventListener('click', () => {
             if (!extractedData) return;
             
             const d = extractedData.data;
-            let tsv = 'Field\tValue\n';
-            tsv += `Vendor\t${d.vendor || ''}\n`;
-            tsv += `Invoice Number\t${d.invoice_number || ''}\n`;
-            tsv += `Date\t${d.date || ''}\n`;
-            tsv += `Subtotal\t${d.subtotal || ''}\n`;
-            tsv += `Tax\t${d.tax || ''}\n`;
-            tsv += `Total\t${d.total || ''}\n`;
-            tsv += `Summary\t${d.summary || ''}\n\n`;
             
-            if (d.line_items && d.line_items.length > 0) {
-                tsv += '\nLine Items\n';
-                tsv += 'Description\tQuantity\tPrice\n';
-                d.line_items.forEach(item => {
-                    tsv += `${item.description || ''}\t${item.quantity || ''}\t${item.price || ''}\n`;
-                });
+            // Create HTML table for Excel with better formatting
+            let html = `
+<html xmlns:x="urn:schemas-microsoft-com:office:excel">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; }
+        th { background-color: #667eea; color: white; padding: 12px; text-align: left; font-weight: bold; border: 1px solid #ddd; }
+        td { padding: 10px; border: 1px solid #ddd; }
+        .header-row { background-color: #f0f2ff; font-weight: bold; }
+        .total-row { background-color: #fff9e6; font-weight: bold; }
+        .section-header { background-color: #667eea; color: white; font-weight: bold; padding: 10px; }
+    </style>
+</head>
+<body>
+    <table>
+        <tr class="section-header">
+            <td colspan="2" style="font-size: 16px; text-align: center;">INVOICE DETAILS</td>
+        </tr>
+        <tr class="header-row">
+            <th style="width: 30%;">Field</th>
+            <th style="width: 70%;">Value</th>
+        </tr>
+        <tr>
+            <td><strong>Vendor Name</strong></td>
+            <td>${d.vendor || 'Not Available'}</td>
+        </tr>
+        <tr>
+            <td><strong>Invoice Number</strong></td>
+            <td>${d.invoice_number || 'Not Available'}</td>
+        </tr>
+        <tr>
+            <td><strong>Invoice Date</strong></td>
+            <td>${d.date || 'Not Available'}</td>
+        </tr>
+        <tr>
+            <td><strong>Subtotal</strong></td>
+            <td>${d.subtotal || 'Not Available'}</td>
+        </tr>
+        <tr>
+            <td><strong>Tax Amount</strong></td>
+            <td>${d.tax || 'Not Available'}</td>
+        </tr>
+        <tr class="total-row">
+            <td><strong>TOTAL AMOUNT</strong></td>
+            <td><strong>${d.total || 'Not Available'}</strong></td>
+        </tr>`;
+            
+            if (d.summary) {
+                html += `
+        <tr>
+            <td><strong>Summary</strong></td>
+            <td>${d.summary}</td>
+        </tr>`;
             }
             
-            downloadFile(tsv, 'invoice_data.xls', 'application/vnd.ms-excel');
+            html += `
+    </table>`;
+            
+            if (d.line_items && d.line_items.length > 0) {
+                html += `
+    <br><br>
+    <table>
+        <tr class="section-header">
+            <td colspan="3" style="font-size: 16px; text-align: center;">LINE ITEMS</td>
+        </tr>
+        <tr class="header-row">
+            <th style="width: 10%;">#</th>
+            <th style="width: 60%;">Description</th>
+            <th style="width: 15%;">Quantity</th>
+            <th style="width: 15%;">Price</th>
+        </tr>`;
+                
+                d.line_items.forEach((item, i) => {
+                    html += `
+        <tr>
+            <td>${i + 1}</td>
+            <td>${item.description || 'Item'}</td>
+            <td>${item.quantity || '-'}</td>
+            <td>${item.price || '-'}</td>
+        </tr>`;
+                });
+                
+                html += `
+    </table>`;
+            }
+            
+            html += `
+</body>
+</html>`;
+            
+            downloadFile(html, 'invoice_data.xls', 'application/vnd.ms-excel');
         });
         
         // 4. Download JSON
@@ -810,6 +905,39 @@
                 feedback.classList.remove('show');
                 feedback.textContent = '✓ Copied to clipboard!';
             }, 2000);
+        }
+        
+        // Helper: Pad text to right
+        function padRight(text, length) {
+            text = String(text);
+            if (text.length >= length) return text.substring(0, length);
+            return text + ' '.repeat(length - text.length);
+        }
+        
+        // Helper: Truncate text
+        function truncate(text, maxLength) {
+            text = String(text);
+            if (text.length <= maxLength) return text;
+            return text.substring(0, maxLength - 3) + '...';
+        }
+        
+        // Helper: Wrap text to multiple lines
+        function wrapText(text, maxWidth) {
+            const words = text.split(' ');
+            const lines = [];
+            let currentLine = '';
+            
+            words.forEach(word => {
+                if ((currentLine + word).length <= maxWidth) {
+                    currentLine += (currentLine ? ' ' : '') + word;
+                } else {
+                    if (currentLine) lines.push(currentLine);
+                    currentLine = word;
+                }
+            });
+            
+            if (currentLine) lines.push(currentLine);
+            return lines;
         }
     </script>
 </body>
