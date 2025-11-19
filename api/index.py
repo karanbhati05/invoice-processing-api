@@ -7,7 +7,7 @@ import os
 import tempfile
 from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
-from processor import extract_invoice_data
+from api.processor import extract_invoice_data
 
 # Initialize Flask app
 app = Flask(__name__)
