@@ -4,10 +4,15 @@ Flask-based serverless function for Vercel deployment.
 """
 
 import os
+import sys
 import tempfile
 from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
-from api.processor import extract_invoice_data
+
+# Add the parent directory to sys.path to enable imports
+sys.path.insert(0, os.path.dirname(__file__))
+
+from processor import extract_invoice_data
 
 # Initialize Flask app
 app = Flask(__name__)
