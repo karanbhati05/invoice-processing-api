@@ -696,45 +696,36 @@
                     
                     const d = extractedData.data;
             
-            // Create clean, professional table
-            let table = '┌─────────────────────────────────────────────────────────────────────┐\n';
-            table += '│                        INVOICE DETAILS                              │\n';
-            table += '├─────────────────────────────────────────────────────────────────────┤\n';
-            table += `│ Vendor           : ${padRight(d.vendor || 'Not Available', 47)}│\n`;
-            table += `│ Invoice Number   : ${padRight(d.invoice_number || 'Not Available', 47)}│\n`;
-            table += `│ Date             : ${padRight(d.date || 'Not Available', 47)}│\n`;
-            table += `│ Subtotal         : ${padRight(d.subtotal || 'Not Available', 47)}│\n`;
-            table += `│ Tax              : ${padRight(d.tax || 'Not Available', 47)}│\n`;
-            table += '├─────────────────────────────────────────────────────────────────────┤\n';
-            table += `│ TOTAL            : ${padRight(d.total || 'Not Available', 47)}│\n`;
-            table += '└─────────────────────────────────────────────────────────────────────┘\n';
+            // Create Word-compatible table using tab-separated format
+            let table = 'INVOICE DETAILS\n';
+            table += '═══════════════════════════════════════════════════════════════════\n\n';
+            table += `Vendor Name\t\t${d.vendor || 'Not Available'}\n`;
+            table += `Invoice Number\t\t${d.invoice_number || 'Not Available'}\n`;
+            table += `Invoice Date\t\t${d.date || 'Not Available'}\n`;
+            table += `Subtotal\t\t${d.subtotal || 'Not Available'}\n`;
+            table += `Tax Amount\t\t${d.tax || 'Not Available'}\n`;
+            table += `\nTOTAL AMOUNT\t\t${d.total || 'Not Available'}\n`;
             
             if (d.summary) {
-                table += '\n┌─────────────────────────────────────────────────────────────────────┐\n';
-                table += '│ SUMMARY                                                             │\n';
-                table += '├─────────────────────────────────────────────────────────────────────┤\n';
-                const summaryLines = wrapText(d.summary, 67);
-                summaryLines.forEach(line => {
-                    table += `│ ${padRight(line, 67)} │\n`;
-                });
-                table += '└─────────────────────────────────────────────────────────────────────┘\n';
+                table += '\n═══════════════════════════════════════════════════════════════════\n';
+                table += 'SUMMARY\n';
+                table += '───────────────────────────────────────────────────────────────────\n';
+                table += d.summary + '\n';
             }
             
             if (d.line_items && d.line_items.length > 0) {
-                table += '\n┌────┬──────────────────────────────────────────┬──────────┬──────────────┐\n';
-                table += '│ #  │ Description                          │ Quantity │ Price        │\n';
-                table += '├────┼──────────────────────────────────────────┼──────────┼──────────────┤\n';
+                table += '\n═══════════════════════════════════════════════════════════════════\n';
+                table += 'LINE ITEMS\n';
+                table += '───────────────────────────────────────────────────────────────────\n';
+                table += '#\tDescription\t\t\tQuantity\tPrice\n';
+                table += '───────────────────────────────────────────────────────────────────\n';
                 d.line_items.forEach((item, i) => {
-                    const desc = truncate(item.description || 'Item', 40);
-                    const qty = truncate(item.quantity || '-', 8);
-                    const price = truncate(item.price || '-', 12);
-                    table += `│ ${padRight((i + 1).toString(), 2)} │ ${padRight(desc, 40)} │ ${padRight(qty, 8)} │ ${padRight(price, 12)} │\n`;
+                    const desc = (item.description || 'Item').substring(0, 45);
+                    const qty = item.quantity || '-';
+                    const price = item.price || '-';
+                    table += `${i + 1}\t${desc}\t${qty}\t${price}\n`;
                 });
-                table += '└────┴──────────────────────────────────────────┴──────────┴──────────────┘\n';
             }
-            
-            table += '\n─────────────────────────────────────────────────────────────────────────\n';
-            table += `Generated by AI Invoice Processing | ${new Date().toLocaleDateString()}\n`;
             
             copyToClipboard(table);
                 });
@@ -750,8 +741,7 @@
                     }
                     
                     try {
-                        const d = extractedData.data;
-                        const date = new Date().toLocaleDateString();
+            const d = extractedData.data;
             
             // Create professional Excel-compatible HTML
             let html = `
@@ -760,9 +750,8 @@
     <meta charset="UTF-8">
     <style>
         body { font-family: 'Calibri', 'Segoe UI', Arial, sans-serif; margin: 25px; background-color: #ffffff; }
-        .header { text-align: center; margin-bottom: 35px; padding-bottom: 15px; border-bottom: 3px solid #667eea; }
-        .header h1 { color: #667eea; font-size: 28px; margin-bottom: 8px; font-weight: bold; letter-spacing: 1px; }
-        .header p { color: #888; font-size: 12px; margin-top: 5px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { color: #667eea; font-size: 26px; margin-bottom: 0; font-weight: bold; }
         table { border-collapse: collapse; width: 100%; margin-bottom: 35px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; 
              text-align: left; font-weight: bold; border: 1px solid #5568d3; font-size: 14px; }
@@ -783,8 +772,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>📄 INVOICE DETAILS</h1>
-        <p>Generated on ${date}</p>
+        <h1>INVOICE DETAILS</h1>
     </div>
     
     <table>
@@ -829,7 +817,7 @@
             
             if (d.line_items && d.line_items.length > 0) {
                 html += `
-    <div class="section-title">🛒 LINE ITEMS</div>
+    <div class="section-title">LINE ITEMS</div>
     <table style="margin-top: 0; border-radius: 0 0 4px 4px;">
         <tr class="line-item-header">
             <th style="width: 8%; text-align: center; padding: 16px;">#</th>
@@ -855,10 +843,6 @@
             }
             
             html += `
-    <div class="footer">
-        <strong>Generated by AI Invoice Processing System</strong><br>
-        Powered by <strong>Google Gemini AI</strong> • <strong>OCR.space</strong>
-    </div>
 </body>
 </html>`;
             
