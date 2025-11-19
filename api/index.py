@@ -167,10 +167,16 @@ def health_check():
     Returns:
         JSON response indicating service status
     """
+    gemini_key = os.environ.get('GEMINI_API_KEY')
+    ocr_key = os.environ.get('OCR_API_KEY')
+    
     return jsonify({
         'status': 'healthy',
         'service': 'Invoice Processing API',
-        'version': '1.0.0'
+        'version': '1.0.0',
+        'gemini_api_configured': bool(gemini_key),
+        'gemini_api_preview': gemini_key[:10] + '...' if gemini_key else None,
+        'ocr_api_configured': bool(ocr_key)
     }), 200
 
 
