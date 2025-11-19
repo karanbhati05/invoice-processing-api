@@ -735,7 +735,7 @@
                 <button class="export-btn" id="copyTableBtn" title="Copy as formatted table">
                     📋 Copy Table
                 </button>
-                <button class="export-btn" id="exportExcelBtn" title="Download as Excel spreadsheet">
+                <button class="export-btn" id="exportExcelBtn" title="Download as CSV (opens in Excel)">
                     📊 Export to Excel
                 </button>
             </div>
@@ -966,7 +966,7 @@
                 });
             }
         
-            // 2. Export as Excel (Professional HTML table format)
+            // 2. Export as Excel (CSV format that Excel can open)
             const excelBtn = document.getElementById('exportExcelBtn');
             if (excelBtn) {
                 excelBtn.addEventListener('click', () => {
@@ -976,75 +976,35 @@
                     }
                     
                     try {
-            const d = extractedData.data;
-            
-            // Create professional Excel-compatible HTML
-            let html = `
-<html xmlns:x="urn:schemas-microsoft-com:office:excel">
-<head>
-    <meta charset="UTF-8">
-    <style>
-        body { font-family: 'Calibri', 'Segoe UI', Arial, sans-serif; margin: 25px; background-color: #ffffff; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .header h1 { color: #667eea; font-size: 26px; margin-bottom: 0; font-weight: bold; }
-        table { border-collapse: collapse; width: 100%; margin-bottom: 35px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; 
-             text-align: left; font-weight: bold; border: 1px solid #5568d3; font-size: 14px; }
-        td { padding: 13px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: middle; }
-        .field-col { background-color: #f5f7ff; font-weight: 600; width: 32%; color: #333; border-right: 2px solid #667eea; }
-        .value-col { background-color: white; color: #444; padding-left: 18px; }
-        .total-row td { background-color: #fffacd; font-weight: bold; font-size: 16px; border: 2px solid #ffd700; }
-        .total-row .field-col { background-color: #ffe4b5; }
-        .section-title { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px; 
-                         margin-top: 25px; margin-bottom: 0; font-size: 16px; font-weight: bold; text-align: center; 
-                         letter-spacing: 0.5px; border-radius: 4px 4px 0 0; }
-        .line-item-header { background: linear-gradient(135deg, #764ba2 0%, #667eea 100%) !important; 
-                            border: 1px solid #5568d3 !important; }
-        .footer { margin-top: 40px; padding-top: 25px; border-top: 3px solid #e0e0e0; 
-                  text-align: center; color: #999; font-size: 11px; line-height: 1.6; }
-        .footer strong { color: #667eea; }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>INVOICE DETAILS</h1>
-    </div>
-    
-    <table>
-        <tr>
-            <th colspan="2" style="text-align: center; font-size: 16px; padding: 18px;">INVOICE INFORMATION</th>
-        </tr>
-        <tr>
-            <td class="field-col">Vendor Name</td>
-            <td class="value-col">${d.vendor || 'Not Available'}</td>
-        </tr>
-        <tr>
-            <td class="field-col">Invoice Number</td>
-            <td class="value-col">${d.invoice_number || 'Not Available'}</td>
-        </tr>
-        <tr>
-            <td class="field-col">Invoice Date</td>
-            <td class="value-col">${d.date || 'Not Available'}</td>
-        </tr>
-        <tr>
-            <td class="field-col">Subtotal</td>
-            <td class="value-col">${d.subtotal || 'Not Available'}</td>
-        </tr>
-        <tr>
-            <td class="field-col">Tax Amount</td>
-            <td class="value-col">${d.tax || 'Not Available'}</td>
-        </tr>
-        <tr class="total-row">
-            <td class="field-col">TOTAL AMOUNT</td>
-            <td class="value-col">${d.total || 'Not Available'}</td>
-        </tr>
-    </table>`;
-            
-            html += `
-</body>
-</html>`;
-            
-                    downloadFile(html, 'invoice_data.xls', 'application/vnd.ms-excel');
+                        const d = extractedData.data;
+                        
+                        // Create CSV content with proper Excel formatting
+                        let csv = '\uFEFF'; // UTF-8 BOM for Excel compatibility
+                        
+                        // Add title
+                        csv += 'INVOICE DETAILS\n\n';
+                        
+                        // Add invoice data
+                        csv += 'Field,Value\n';
+                        csv += `Vendor Name,"${(d.vendor || 'Not Available').replace(/"/g, '""')}"\n`;
+                        csv += `Invoice Number,"${(d.invoice_number || 'Not Available').replace(/"/g, '""')}"\n`;
+                        csv += `Invoice Date,"${(d.date || 'Not Available').replace(/"/g, '""')}"\n`;
+                        csv += `Subtotal,"${(d.subtotal || 'Not Available').replace(/"/g, '""')}"\n`;
+                        csv += `Tax Amount,"${(d.tax || 'Not Available').replace(/"/g, '""')}"\n`;
+                        csv += `TOTAL AMOUNT,"${(d.total || 'Not Available').replace(/"/g, '""')}"\n`;
+                        
+                        // Create blob and download
+                        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                        const link = document.createElement('a');
+                        const url = URL.createObjectURL(blob);
+                        
+                        link.setAttribute('href', url);
+                        link.setAttribute('download', 'invoice_data.csv');
+                        link.style.visibility = 'hidden';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        
                     } catch (error) {
                         showError('Failed to generate Excel file: ' + error.message);
                         console.error('Excel export error:', error);
