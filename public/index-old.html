@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Processing API - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(102, 126, 234, 0.4), 0 0 40px rgba(118, 75, 162, 0.2); }
+            50% { box-shadow: 0 0 40px rgba(102, 126, 234, 0.6), 0 0 80px rgba(118, 75, 162, 0.4); }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #4facfe);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: float 20s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 50px;
+            box-shadow: 0 30px 90px rgba(0, 0, 0, 0.3), 
+                        0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+            max-width: 650px;
+            width: 100%;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            animation: glow 3s ease-in-out infinite;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #4facfe);
+            background-size: 200% 100%;
+            animation: gradientShift 3s linear infinite;
+            border-radius: 30px 30px 0 0;
+        }
+
+        h1 {
+            font-size: 42px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            letter-spacing: -1px;
+            position: relative;
+            display: inline-block;
+            text-align: center;
+            width: 100%;
+        }
+
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 15px;
+            margin-top: 16px;
+            font-weight: 500;
+            opacity: 0.8;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .upload-area {
+            border: 3px dashed transparent;
+            background: linear-gradient(white, white) padding-box,
+                        linear-gradient(135deg, #667eea, #764ba2, #f093fb) border-box;
+            border-radius: 20px;
+            padding: 50px 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .upload-area::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.1), transparent 70%);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+            border-radius: 50%;
+        }
+
+        .upload-area:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .upload-area:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.25);
+        }
+
+        .upload-area.dragover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05)) padding-box,
+                        linear-gradient(135deg, #667eea, #764ba2, #f093fb) border-box;
+            transform: scale(1.02);
+            box-shadow: 0 20px 50px rgba(102, 126, 234, 0.3);
+        }
+
+        .upload-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            display: inline-block;
+            transition: transform 0.3s ease;
+            filter: drop-shadow(0 4px 8px rgba(102, 126, 234, 0.3));
+        }
+
+        .upload-area:hover .upload-icon {
+            transform: scale(1.1) rotateZ(5deg);
+        }
+
+        .upload-text {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            font-size: 14px;
+            color: #888;
+            font-weight: 500;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-info {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(118, 75, 162, 0.08));
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            display: none;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .file-info.show {
+            display: block;
+        }
+
+        .file-name {
+            color: #333;
+            font-weight: 700;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .file-size {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .process-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: none;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.5px;
+        }
+
+        .process-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .process-btn:hover:not(:disabled)::before {
+            left: 100%;
+        }
+
+        .process-btn.show {
+            display: block;
+        }
+
+        .process-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.5);
+        }
+
+        .process-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .process-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto 15px;
+            position: relative;
+        }
+
+        .spinner::before,
+        .spinner::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+        }
+
+        .spinner::before {
+            width: 50px;
+            height: 50px;
+            border: 4px solid transparent;
+            border-top-color: #667eea;
+            border-right-color: #764ba2;
+            animation: spin 1s cubic-bezier(0.6, 0.2, 0.4, 0.8) infinite;
+        }
+
+        .spinner::after {
+            width: 38px;
+            height: 38px;
+            top: 6px;
+            left: 6px;
+            border: 4px solid transparent;
+            border-bottom-color: #f093fb;
+            border-left-color: #4facfe;
+            animation: spin 0.7s cubic-bezier(0.6, 0.2, 0.4, 0.8) infinite reverse;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .results {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .results-title {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 24px;
+            margin-bottom: 25px;
+            text-align: center;
+            font-weight: 800;
+        }
+
+        .result-item {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .result-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, #667eea, #764ba2);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .result-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
+            border-color: rgba(102, 126, 234, 0.4);
+        }
+
+        .result-item:hover::before {
+            opacity: 1;
+        }
+
+        .result-label {
+            font-size: 11px;
+            color: #888;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .result-value {
+            color: #333;
+            font-size: 19px;
+            font-weight: 700;
+        }
+
+        .result-value.empty {
+            color: #999;
+            font-style: italic;
+            font-weight: 400;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .error {
+            background: linear-gradient(135deg, rgba(255, 77, 77, 0.1), rgba(255, 100, 100, 0.1));
+            border: 2px solid rgba(255, 77, 77, 0.3);
+            border-radius: 12px;
+            color: #d32f2f;
+            font-weight: 600;
+            padding: 18px 20px;
+            margin-top: 20px;
+            display: none;
+            animation: shake 0.5s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .reset-btn {
+            width: 100%;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #667eea;
+            border: 2px solid #667eea;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .export-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .export-btn {
+            padding: 14px 20px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #667eea;
+            border: 2px solid transparent;
+            background-clip: padding-box;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .export-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: -1;
+        }
+
+        .export-btn:hover::before {
+            opacity: 1;
+        }
+
+        .export-btn:hover {
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+            border-color: transparent;
+        }
+
+        .copy-feedback {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #4caf50, #66bb6a);
+            color: white;
+            padding: 18px 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(76, 175, 80, 0.4);
+            opacity: 0;
+            transform: translateX(400px);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+            font-weight: 700;
+            font-size: 15px;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .copy-feedback.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .copy-feedback::before {
+            content: '✓';
+            display: inline-block;
+            margin-right: 10px;
+            font-size: 18px;
+            animation: pop 0.3s ease;
+        }
+
+        @keyframes pop {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+        }
+
+        .result-item.highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.35);
+        }
+
+        .result-item.highlight .result-label,
+        .result-item.highlight .result-value {
+            color: white;
+        }
+
+        .summary-section {
+            margin-top: 25px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(118, 75, 162, 0.08));
+            padding: 25px;
+            border-radius: 15px;
+            display: none;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .summary-section.show {
+            display: block;
+        }
+
+        .summary-title {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        .summary-text {
+            color: #333;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .line-items-section {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .line-items-section.show {
+            display: block;
+        }
+
+        .line-item {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 16px 18px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            border: 1px solid rgba(102, 126, 234, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .line-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        .line-item-desc {
+            color: #333;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .line-item-qty {
+            color: #666;
+            margin: 0 10px;
+            font-size: 13px;
+        }
+
+        .line-item-price {
+            color: #667eea;
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .ai-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .ai-badge.enabled {
+            background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+            color: white;
+        }
+
+        .ai-badge.disabled {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #999;
+            font-size: 12px;
+        }
+
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📄 Invoice Processing API</h1>
+        <p class="subtitle">Upload an invoice to extract vendor, date, and total amount</p>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📤</div>
+            <div class="upload-text">Click to upload or drag & drop</div>
+            <div class="upload-hint">Supports: PNG, JPG, PDF (Max 10MB)</div>
+            <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.pdf,.gif,.bmp,.tiff">
+        </div>
+
+        <div class="file-info" id="fileInfo">
+            <div class="file-name" id="fileName"></div>
+            <div class="file-size" id="fileSize"></div>
+        </div>
+
+        <button class="process-btn" id="processBtn">Process Invoice</button>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div class="loading-text">Processing your invoice...</div>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="results" id="results">
+            <div class="ai-badge" id="aiBadge"></div>
+            <h2 class="results-title">✨ Extracted Data</h2>
+            
+            <div class="result-item">
+                <span class="result-label">Vendor</span>
+                <span class="result-value" id="vendorValue">-</span>
+            </div>
+            
+            <div class="result-item">
+                <span class="result-label">Invoice #</span>
+                <span class="result-value" id="invoiceNumberValue">-</span>
+            </div>
+            
+            <div class="result-item">
+                <span class="result-label">Date</span>
+                <span class="result-value" id="dateValue">-</span>
+            </div>
+            
+            <div class="result-item">
+                <span class="result-label">Subtotal</span>
+                <span class="result-value" id="subtotalValue">-</span>
+            </div>
+            
+            <div class="result-item">
+                <span class="result-label">Tax</span>
+                <span class="result-value" id="taxValue">-</span>
+            </div>
+            
+            <div class="result-item highlight">
+                <span class="result-label">Total</span>
+                <span class="result-value" id="totalValue">-</span>
+            </div>
+            
+            <div class="summary-section" id="summarySection">
+                <h3 class="summary-title">📋 Summary</h3>
+                <p class="summary-text" id="summaryText">-</p>
+            </div>
+            
+            <div class="line-items-section" id="lineItemsSection">
+                <h3 class="summary-title">🛒 Line Items</h3>
+                <div id="lineItemsList"></div>
+            </div>
+            
+            <div class="export-buttons">
+                <button class="export-btn" id="copyTableBtn" title="Copy as formatted table">
+                    📋 Copy Table
+                </button>
+                <button class="export-btn" id="exportExcelBtn" title="Download as CSV (opens in Excel)">
+                    📊 Export to Excel
+                </button>
+            </div>
+            
+            <button class="reset-btn" id="resetBtn">Upload Another Invoice</button>
+        </div>
+
+        <div class="copy-feedback" id="copyFeedback">✓ Copied to clipboard!</div>
+
+        <div class="footer">
+            Powered by <a href="https://ocr.space" target="_blank">OCR.space</a> • 
+            Built with ❤️ using Flask & Vercel
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const processBtn = document.getElementById('processBtn');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        const results = document.getElementById('results');
+        const resetBtn = document.getElementById('resetBtn');
+        const vendorValue = document.getElementById('vendorValue');
+        const dateValue = document.getElementById('dateValue');
+        const totalValue = document.getElementById('totalValue');
+        const invoiceNumberValue = document.getElementById('invoiceNumberValue');
+        const taxValue = document.getElementById('taxValue');
+        const subtotalValue = document.getElementById('subtotalValue');
+        const summarySection = document.getElementById('summarySection');
+        const summaryText = document.getElementById('summaryText');
+        const lineItemsSection = document.getElementById('lineItemsSection');
+        const lineItemsList = document.getElementById('lineItemsList');
+        const aiBadge = document.getElementById('aiBadge');
+
+        let selectedFile = null;
+        let extractedData = null; // Store extracted data for export
+
+        // Click to upload
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        // File selection
+        fileInput.addEventListener('change', (e) => {
+            handleFile(e.target.files[0]);
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFile(e.dataTransfer.files[0]);
+        });
+
+        function handleFile(file) {
+            if (!file) return;
+
+            // Validate file type
+            const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/bmp', 'image/tiff', 'application/pdf'];
+            if (!validTypes.includes(file.type)) {
+                showError('Invalid file type. Please upload PNG, JPG, PDF, GIF, BMP, or TIFF.');
+                return;
+            }
+
+            // Validate file size (10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                showError('File too large. Maximum size is 10MB.');
+                return;
+            }
+
+            selectedFile = file;
+
+            // Show file info
+            fileName.textContent = file.name;
+            fileSize.textContent = `${(file.size / 1024).toFixed(1)} KB`;
+            fileInfo.classList.add('show');
+            processBtn.classList.add('show');
+
+            // Hide previous results/errors
+            results.classList.remove('show');
+            error.classList.remove('show');
+        }
+
+        // Process invoice
+        processBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            // Show loading
+            processBtn.disabled = true;
+            loading.classList.add('show');
+            error.classList.remove('show');
+            results.classList.remove('show');
+
+            try {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+
+                const response = await fetch('/api/process', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Store extracted data for export
+                    extractedData = data;
+                    
+                    // Show AI status badge
+                    if (data.ai_enabled) {
+                        aiBadge.textContent = '🤖 AI-Powered Extraction';
+                        aiBadge.className = 'ai-badge enabled';
+                    } else {
+                        aiBadge.textContent = '⚙️ Regex-Based Extraction (Add GEMINI_API_KEY for AI)';
+                        aiBadge.className = 'ai-badge disabled';
+                    }
+                    
+                    // Show results
+                    vendorValue.textContent = data.data.vendor || 'Not found';
+                    vendorValue.className = data.data.vendor ? 'result-value' : 'result-value empty';
+                    
+                    invoiceNumberValue.textContent = data.data.invoice_number || 'Not found';
+                    invoiceNumberValue.className = data.data.invoice_number ? 'result-value' : 'result-value empty';
+                    
+                    dateValue.textContent = data.data.date || 'Not found';
+                    dateValue.className = data.data.date ? 'result-value' : 'result-value empty';
+                    
+                    subtotalValue.textContent = data.data.subtotal || 'Not found';
+                    subtotalValue.className = data.data.subtotal ? 'result-value' : 'result-value empty';
+                    
+                    taxValue.textContent = data.data.tax || 'Not found';
+                    taxValue.className = data.data.tax ? 'result-value' : 'result-value empty';
+                    
+                    totalValue.textContent = data.data.total || 'Not found';
+                    totalValue.className = data.data.total ? 'result-value' : 'result-value empty';
+                    
+                    // Show summary if available
+                    if (data.data.summary) {
+                        summaryText.textContent = data.data.summary;
+                        summarySection.classList.add('show');
+                    } else {
+                        summarySection.classList.remove('show');
+                    }
+                    
+                    // Show line items if available
+                    if (data.data.line_items && data.data.line_items.length > 0) {
+                        lineItemsList.innerHTML = '';
+                        data.data.line_items.forEach(item => {
+                            const itemDiv = document.createElement('div');
+                            itemDiv.className = 'line-item';
+                            itemDiv.innerHTML = `
+                                <span class="line-item-desc">${item.description || 'Item'}</span>
+                                <span class="line-item-qty">Qty: ${item.quantity || '-'}</span>
+                                <span class="line-item-price">${item.price || '-'}</span>
+                            `;
+                            lineItemsList.appendChild(itemDiv);
+                        });
+                        lineItemsSection.classList.add('show');
+                    } else {
+                        lineItemsSection.classList.remove('show');
+                    }
+                    
+                    results.classList.add('show');
+                } else {
+                    showError(data.error || 'Processing failed. Please try again.');
+                }
+            } catch (err) {
+                showError('Network error. Please check your connection and try again.');
+                console.error(err);
+            } finally {
+                loading.classList.remove('show');
+                processBtn.disabled = false;
+            }
+        });
+
+        // Reset
+        resetBtn.addEventListener('click', () => {
+            selectedFile = null;
+            fileInput.value = '';
+            fileInfo.classList.remove('show');
+            processBtn.classList.remove('show');
+            results.classList.remove('show');
+            error.classList.remove('show');
+        });
+
+        function showError(message) {
+            error.textContent = message;
+            error.classList.add('show');
+        }
+
+        // Export Functions
+        
+        // Wait for DOM to be ready, then attach export button listeners
+        window.addEventListener('DOMContentLoaded', () => {
+            // 1. Copy as Table
+            const copyBtn = document.getElementById('copyTableBtn');
+            if (copyBtn) {
+                copyBtn.addEventListener('click', () => {
+                    if (!extractedData) {
+                        showError('No invoice data to copy. Please process an invoice first.');
+                        return;
+                    }
+                    
+                    const d = extractedData.data;
+            
+            // Create Word-compatible table using tab-separated format
+            let table = 'INVOICE DETAILS\n';
+            table += `Vendor Name\t\t${d.vendor || 'Not Available'}\n`;
+            table += `Invoice Number\t\t${d.invoice_number || 'Not Available'}\n`;
+            table += `Invoice Date\t\t${d.date || 'Not Available'}\n`;
+            table += `Subtotal\t\t${d.subtotal || 'Not Available'}\n`;
+            table += `Tax Amount\t\t${d.tax || 'Not Available'}\n`;
+            table += `\nTOTAL AMOUNT\t\t${d.total || 'Not Available'}\n`;
+            
+            copyToClipboard(table);
+                });
+            }
+        
+            // 2. Export as Excel (CSV format that Excel can open)
+            const excelBtn = document.getElementById('exportExcelBtn');
+            if (excelBtn) {
+                excelBtn.addEventListener('click', () => {
+                    if (!extractedData) {
+                        showError('No invoice data to export. Please process an invoice first.');
+                        return;
+                    }
+                    
+                    try {
+                        const d = extractedData.data;
+                        
+                        // Create CSV content with proper Excel formatting
+                        let csv = '\uFEFF'; // UTF-8 BOM for Excel compatibility
+                        
+                        // Add title
+                        csv += 'INVOICE DETAILS\n\n';
+                        
+                        // Add invoice data
+                        csv += 'Field,Value\n';
+                        csv += `Vendor Name,"${(d.vendor || 'Not Available').replace(/"/g, '""')}"\n`;
+                        csv += `Invoice Number,"${(d.invoice_number || 'Not Available').replace(/"/g, '""')}"\n`;
+                        csv += `Invoice Date,"${(d.date || 'Not Available').replace(/"/g, '""')}"\n`;
+                        csv += `Subtotal,"${(d.subtotal || 'Not Available').replace(/"/g, '""')}"\n`;
+                        csv += `Tax Amount,"${(d.tax || 'Not Available').replace(/"/g, '""')}"\n`;
+                        csv += `TOTAL AMOUNT,"${(d.total || 'Not Available').replace(/"/g, '""')}"\n`;
+                        
+                        // Create blob and download
+                        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                        const link = document.createElement('a');
+                        const url = URL.createObjectURL(blob);
+                        
+                        link.setAttribute('href', url);
+                        link.setAttribute('download', 'invoice_data.csv');
+                        link.style.visibility = 'hidden';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        
+                    } catch (error) {
+                        showError('Failed to generate Excel file: ' + error.message);
+                        console.error('Excel export error:', error);
+                    }
+                });
+            }
+        });  // End of DOMContentLoaded
+        
+        // 3. Download JSON - REMOVED (keeping only Copy Table and Export Excel)
+        
+        // Helper: Copy to clipboard
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const feedback = document.getElementById('copyFeedback');
+                if (feedback) {
+                    feedback.textContent = '✓ Copied to clipboard!';
+                    feedback.classList.add('show');
+                    setTimeout(() => feedback.classList.remove('show'), 2000);
+                } else {
+                    console.error('Copy feedback element not found');
+                }
+            }).catch(err => {
+                showError('Failed to copy to clipboard');
+                console.error(err);
+            });
+        }
+        
+        // Helper: Download file
+        function downloadFile(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            const feedback = document.getElementById('copyFeedback');
+            feedback.textContent = `✓ Downloaded ${filename}!`;
+            feedback.classList.add('show');
+            setTimeout(() => {
+                feedback.classList.remove('show');
+                feedback.textContent = '✓ Copied to clipboard!';
+            }, 2000);
+        }
+        
+        // Helper: Pad text to right
+        function padRight(text, length) {
+            text = String(text);
+            if (text.length >= length) return text.substring(0, length);
+            return text + ' '.repeat(length - text.length);
+        }
+        
+        // Helper: Truncate text
+        function truncate(text, maxLength) {
+            text = String(text);
+            if (text.length <= maxLength) return text;
+            return text.substring(0, maxLength - 3) + '...';
+        }
+        
+        // Helper: Wrap text to multiple lines
+        function wrapText(text, maxWidth) {
+            const words = text.split(' ');
+            const lines = [];
+            let currentLine = '';
+            
+            words.forEach(word => {
+                if ((currentLine + word).length <= maxWidth) {
+                    currentLine += (currentLine ? ' ' : '') + word;
+                } else {
+                    if (currentLine) lines.push(currentLine);
+                    currentLine = word;
+                }
+            });
+            
+            if (currentLine) lines.push(currentLine);
+            return lines;
+        }
+    </script>
+</body>
+</html>
