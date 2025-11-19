@@ -135,6 +135,8 @@ def extract_date(text):
     - MM-DD-YYYY or DD-MM-YYYY
     - Month DD, YYYY (e.g., January 15, 2024)
     - DD Month YYYY
+    - YYYY-MM-DD (ISO format)
+    - DD.MM.YYYY (European format)
     
     Args:
         text (str): Raw OCR text
@@ -148,14 +150,28 @@ def extract_date(text):
     # Pattern 2: MM-DD-YYYY or DD-MM-YYYY (with dashes)
     pattern2 = r"\b\d{1,2}-\d{1,2}-\d{2,4}\b"
     
-    # Pattern 3: Month DD, YYYY (e.g., January 15, 2024)
-    pattern3 = r"\b(?:January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\.?\s+\d{1,2},?\s+\d{4}\b"
+    # Pattern 3: YYYY-MM-DD (ISO format)
+    pattern3 = r"\b\d{4}-\d{1,2}-\d{1,2}\b"
     
-    # Pattern 4: DD Month YYYY (e.g., 15 January 2024)
-    pattern4 = r"\b\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\.?\s+\d{4}\b"
+    # Pattern 4: DD.MM.YYYY (European format)
+    pattern4 = r"\b\d{1,2}\.\d{1,2}\.\d{2,4}\b"
+    
+    # Pattern 5: Month DD, YYYY (e.g., January 15, 2024)
+    pattern5 = r"\b(?:January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\.?\s+\d{1,2},?\s+\d{4}\b"
+    
+    # Pattern 6: DD Month YYYY (e.g., 15 January 2024)
+    pattern6 = r"\b\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\.?\s+\d{4}\b"
+    
+    # Pattern 7: Date near "Date:" or "Invoice Date:" keywords
+    pattern7 = r"(?:Date|Invoice\s+Date|Bill\s+Date|Due\s+Date)[\s:]*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})"
+    
+    # Try keyword-based pattern first (more accurate)
+    match = re.search(pattern7, text, re.IGNORECASE)
+    if match:
+        return match.group(1)
     
     # Try each pattern in order
-    patterns = [pattern1, pattern2, pattern3, pattern4]
+    patterns = [pattern3, pattern4, pattern1, pattern2, pattern5, pattern6]
     
     for pattern in patterns:
         match = re.search(pattern, text, re.IGNORECASE)
