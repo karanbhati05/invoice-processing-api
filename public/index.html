@@ -759,22 +759,26 @@
 <head>
     <meta charset="UTF-8">
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 20px; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .header h1 { color: #667eea; font-size: 24px; margin-bottom: 5px; }
-        .header p { color: #666; font-size: 12px; }
-        table { border-collapse: collapse; width: 100%; margin-bottom: 30px; }
-        th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px; 
-             text-align: left; font-weight: bold; border: 1px solid #555; font-size: 14px; }
-        td { padding: 12px; border: 1px solid #ddd; font-size: 13px; }
-        .field-col { background-color: #f8f9ff; font-weight: 600; width: 35%; color: #333; }
-        .value-col { background-color: white; color: #333; }
-        .total-row td { background-color: #fff9e6; font-weight: bold; font-size: 15px; }
-        .section-title { background: #667eea; color: white; padding: 12px; margin-top: 20px; 
-                         font-size: 16px; font-weight: bold; text-align: center; }
-        .line-item-header { background: #764ba2 !important; }
-        .footer { margin-top: 30px; padding-top: 20px; border-top: 2px solid #ddd; 
-                  text-align: center; color: #999; font-size: 11px; }
+        body { font-family: 'Calibri', 'Segoe UI', Arial, sans-serif; margin: 25px; background-color: #ffffff; }
+        .header { text-align: center; margin-bottom: 35px; padding-bottom: 15px; border-bottom: 3px solid #667eea; }
+        .header h1 { color: #667eea; font-size: 28px; margin-bottom: 8px; font-weight: bold; letter-spacing: 1px; }
+        .header p { color: #888; font-size: 12px; margin-top: 5px; }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 35px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; 
+             text-align: left; font-weight: bold; border: 1px solid #5568d3; font-size: 14px; }
+        td { padding: 13px; border: 1px solid #e0e0e0; font-size: 13px; vertical-align: middle; }
+        .field-col { background-color: #f5f7ff; font-weight: 600; width: 32%; color: #333; border-right: 2px solid #667eea; }
+        .value-col { background-color: white; color: #444; padding-left: 18px; }
+        .total-row td { background-color: #fffacd; font-weight: bold; font-size: 16px; border: 2px solid #ffd700; }
+        .total-row .field-col { background-color: #ffe4b5; }
+        .section-title { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px; 
+                         margin-top: 25px; margin-bottom: 0; font-size: 16px; font-weight: bold; text-align: center; 
+                         letter-spacing: 0.5px; border-radius: 4px 4px 0 0; }
+        .line-item-header { background: linear-gradient(135deg, #764ba2 0%, #667eea 100%) !important; 
+                            border: 1px solid #5568d3 !important; }
+        .footer { margin-top: 40px; padding-top: 25px; border-top: 3px solid #e0e0e0; 
+                  text-align: center; color: #999; font-size: 11px; line-height: 1.6; }
+        .footer strong { color: #667eea; }
     </style>
 </head>
 <body>
@@ -785,7 +789,7 @@
     
     <table>
         <tr>
-            <th colspan="2" style="text-align: center; font-size: 15px;">INVOICE INFORMATION</th>
+            <th colspan="2" style="text-align: center; font-size: 16px; padding: 18px;">INVOICE INFORMATION</th>
         </tr>
         <tr>
             <td class="field-col">Vendor Name</td>
@@ -825,23 +829,24 @@
             
             if (d.line_items && d.line_items.length > 0) {
                 html += `
-    <div class="section-title">LINE ITEMS</div>
-    <table style="margin-top: 10px;">
+    <div class="section-title">🛒 LINE ITEMS</div>
+    <table style="margin-top: 0; border-radius: 0 0 4px 4px;">
         <tr class="line-item-header">
-            <th style="width: 8%; text-align: center;">#</th>
-            <th style="width: 55%;">Description</th>
-            <th style="width: 17%; text-align: center;">Quantity</th>
-            <th style="width: 20%; text-align: right;">Price</th>
+            <th style="width: 8%; text-align: center; padding: 16px;">#</th>
+            <th style="width: 52%; padding: 16px;">Description</th>
+            <th style="width: 18%; text-align: center; padding: 16px;">Quantity</th>
+            <th style="width: 22%; text-align: right; padding: 16px;">Price</th>
         </tr>`;
                 
                 d.line_items.forEach((item, i) => {
-                    const bgColor = i % 2 === 0 ? '#ffffff' : '#f8f9ff';
+                    const bgColor = i % 2 === 0 ? '#ffffff' : '#f5f7ff';
+                    const borderColor = i === d.line_items.length - 1 ? '#667eea' : '#e0e0e0';
                     html += `
         <tr>
-            <td style="background-color: ${bgColor}; text-align: center; font-weight: 600;">${i + 1}</td>
-            <td style="background-color: ${bgColor};">${item.description || 'Item'}</td>
-            <td style="background-color: ${bgColor}; text-align: center;">${item.quantity || '-'}</td>
-            <td style="background-color: ${bgColor}; text-align: right; font-weight: 600;">${item.price || '-'}</td>
+            <td style="background-color: ${bgColor}; text-align: center; font-weight: 700; color: #667eea; border-bottom: 1px solid ${borderColor};">${i + 1}</td>
+            <td style="background-color: ${bgColor}; border-bottom: 1px solid ${borderColor};">${item.description || 'Item'}</td>
+            <td style="background-color: ${bgColor}; text-align: center; color: #666; border-bottom: 1px solid ${borderColor};">${item.quantity || '-'}</td>
+            <td style="background-color: ${bgColor}; text-align: right; font-weight: 600; color: #333; border-bottom: 1px solid ${borderColor};">${item.price || '-'}</td>
         </tr>`;
                 });
                 
@@ -851,8 +856,8 @@
             
             html += `
     <div class="footer">
-        Generated by AI Invoice Processing System<br>
-        Powered by Google Gemini AI • OCR.space
+        <strong>Generated by AI Invoice Processing System</strong><br>
+        Powered by <strong>Google Gemini AI</strong> • <strong>OCR.space</strong>
     </div>
 </body>
 </html>`;
