@@ -761,10 +761,14 @@
         
         // 2. Export as Excel (Professional HTML table format)
         document.getElementById('exportExcelBtn').addEventListener('click', () => {
-            if (!extractedData) return;
+            if (!extractedData) {
+                showError('No invoice data to export. Please process an invoice first.');
+                return;
+            }
             
-            const d = extractedData.data;
-            const date = new Date().toLocaleDateString();
+            try {
+                const d = extractedData.data;
+                const date = new Date().toLocaleDateString();
             
             // Create professional Excel-compatible HTML
             let html = `
@@ -870,7 +874,11 @@
 </body>
 </html>`;
             
-            downloadFile(html, 'invoice_data.xls', 'application/vnd.ms-excel');
+                downloadFile(html, 'invoice_data.xls', 'application/vnd.ms-excel');
+            } catch (error) {
+                showError('Failed to generate Excel file: ' + error.message);
+                console.error('Excel export error:', error);
+            }
         });
         
         // 3. Download JSON - REMOVED (keeping only Copy Table and Export Excel)
